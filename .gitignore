@@ -1,0 +1,10 @@
+node_modules/
+.de
+data.db
+lib.old
+log/*
+*.swp
+data/
+dist/
+test/fixtures/cliente
+test_cache/
