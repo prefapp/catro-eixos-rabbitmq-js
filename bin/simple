@@ -1,0 +1,113 @@
+#!/usr/bin/env node
+
+const {Cliente} = require("../index.js");
+
+const cli = require("cli");
+
+function run(comando, opciones){
+
+    if(!comando){
+        cli.fatal(`falta comando a ejecutar`);
+    }
+
+    if(!acciones[comando]){
+        cli.fatal(`comando ${comando} desconocido`);
+    }
+
+    try{
+        acciones[comando](opciones);
+    }
+    catch(e){
+        cli.fatal(`${comando}: ${e}`);
+    }
+}
+
+const acciones = {
+
+    abrirColaYEsperar(opciones){
+
+        if(!opciones.queue)
+            cli.fatal(`Falta cola a abrir`);
+
+        let cliente;
+
+        this.__getCliente(opciones)
+
+            .then((c) => {
+
+                cliente = c;
+
+                return c.abrirCanalSimple(opciones.queue)
+
+            }).then((c) => {
+
+                return c.recibirMensaje({
+
+                    pop: true,
+
+                    bloquear: true,
+
+ //                   timeout: opciones.timeout,
+
+                })
+            
+            }).then((mensaje) => {
+
+                console.log(mensaje)
+    
+            }).then(() => {
+
+                cliente.terminar();
+                
+            })
+    },
+
+    enviarMensaje(opciones){
+
+        let Cliente;
+
+        this.__getCliente(opciones)
+    
+            .then((c) => {
+
+                Cliente = c;
+
+                return c.abrirCanalSimple(
+                    opciones.queue
+                )
+            })
+
+            .then(() => {
+
+                return Cliente.enviarMensaje("lolol")
+
+            })
+
+            .then(() => {
+
+                return Cliente.terminar();
+
+            })
+    },
+
+    __getCliente(opciones){
+
+        const c = new Cliente();
+
+        return c.iniciar('amqp://' + opciones.host)
+
+    }
+
+}
+
+const comando = process.argv[2];
+
+const opciones = cli.parse({
+
+    queue: ["q", "cola", "string"],
+    host: ["h", "host de RabbitMQ", "string"],
+    timeout: ["t", "timeout de espera", "int"],
+
+})
+
+run(comando, opciones);
